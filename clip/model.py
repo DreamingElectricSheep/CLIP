@@ -200,6 +200,7 @@ class Transformer(nn.Module):
         self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
 
     def forward(self, x: torch.Tensor):
+        # implementation of dropping tokens here (maybe)
         return self.resblocks(x)
 
 
