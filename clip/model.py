@@ -202,6 +202,8 @@ class Transformer(nn.Module):
 
     def forward(self, x: torch.Tensor):
         # implementation of dropping tokens here (maybe)
+        print(1234)
+        import pdb; pdb.set_trace()
         return self.resblocks(x)
 
 
