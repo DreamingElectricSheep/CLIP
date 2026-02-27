@@ -198,13 +198,22 @@ class Transformer(nn.Module):
         super().__init__()
         self.width = width
         self.layers = layers
+
+        # Each layer is already conjoined together in a resblock here
         self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
 
     def forward(self, x: torch.Tensor):
         # implementation of dropping tokens here (maybe)
         print(1234)
         import pdb; pdb.set_trace()
-        return self.resblocks(x)
+        # x.shape: tensor with (sequence length (input tokens + CLS token), batch size (# images), self.width (dimensions of the vector embedding passed down)
+        # Therefore, for x.shape = [50, 1, 768]:
+        # x therefore is therefore a tensor matrix with [50/num tokens] dimensions, and each one contains a 1x768 matrix vector embedding representing it
+
+        x = self.resblocks(x)
+        pdb.set_trace()
+
+        return x
 
 
 class VisionTransformer(nn.Module):
