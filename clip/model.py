@@ -186,34 +186,129 @@ class ResidualAttentionBlock(nn.Module):
         self.attn_mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
         return self.attn(x, x, x, need_weights=False, attn_mask=self.attn_mask)[0]
 
-    # This is what we manipulate ; X
-    def forward(self, x: torch.Tensor):
-        x = x + self.attention(self.ln_1(x))
+
+    def forward(self, x: torch.Tensor, return_attn: bool = False):
+        # Original CLIP code:
+        # x = x + self.attention(self.ln_1(x))
+        # x = x + self.mlp(self.ln_2(x))
+
+        # 1. Prepare the mask just like the original code does
+        mask = self.attn_mask.to(dtype=x.dtype, device=x.device) if self.attn_mask is not None else None
+        
+        # 2. Apply LayerNorm (ln_1)
+        x_norm = self.ln_1(x)
+        
+        # 3. Call attention with the MASK and need_weights=True
+        # Note: adding average_attn_weights=False gives you the most research data (per-head)
+        attn_output, weights = self.attn(x_norm, x_norm, x_norm, 
+                                        attn_mask=mask, 
+                                        need_weights=True)
+        
+        # 4. Standard Residuals
+        x = x + attn_output
         x = x + self.mlp(self.ln_2(x))
+        
+        if return_attn:
+            return x, weights
         return x
 
 
-class Transformer(nn.Module):
+# class Transformer(nn.Module):
+#     def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None):
+#         super().__init__()
+#         self.width = width
+#         self.layers = layers
+#         # Each layer is already conjoined together here; resblocks is a sequential container of a ResidualAttentionBlock (a single layer of the transformer)
+#         self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
+
+#     def forward(self, x: torch.Tensor):
+#         # implementation of dropping tokens here (maybe)
+#         print(1234)
+#         import pdb; pdb.set_trace()
+#         # x.shape: tensor with (sequence length (input tokens + CLS token), batch size (# images), self.width (dimensions of the vector embedding passed down)
+#         # Therefore, for x.shape = [50, 1, 768]:
+#         # x therefore is therefore a tensor matrix with [50/num tokens] dimensions, and each one contains a 1x768 matrix vector embedding representing it
+
+#         x = self.resblocks(x)
+#         pdb.set_trace()
+
+#         return x
+    
+class TransformerP(nn.Module):
+    """This is a copy of the original CLIP transformer, but with the forward function modified to allow for token pruning"""
     def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None):
         super().__init__()
         self.width = width
         self.layers = layers
 
-        # Each layer is already conjoined together in a resblock here
-        self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
+        # Store blocks as a ModuleList so we can iterate manually
+        self.resblocks = nn.ModuleList([
+            ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)
+        ])
 
-    def forward(self, x: torch.Tensor):
-        # implementation of dropping tokens here (maybe)
-        print(1234)
-        import pdb; pdb.set_trace()
-        # x.shape: tensor with (sequence length (input tokens + CLS token), batch size (# images), self.width (dimensions of the vector embedding passed down)
-        # Therefore, for x.shape = [50, 1, 768]:
-        # x therefore is therefore a tensor matrix with [50/num tokens] dimensions, and each one contains a 1x768 matrix vector embedding representing it
+    def forward(self, x: torch.Tensor, pruning_plan: dict = None):
+        """
+        x: [Sequence, Batch, Width] -> e.g., [50, 1, 768]
+        pruning_plan: Dict mapping {layer_index: num_tokens_to_keep}
+                      Example: {5: 25} means after Layer 5, keep only 25 tokens.
+        """
+        print(f"Initial shape: {x.shape}")
+        for i, block in enumerate(self.resblocks):
+            # 1. Run the standard transformer block
+            # To prune based on attention, the block must return weights.
+            # If your block doesn't return weights yet, see Step 2 below.
+            x, attn_weights = block(x, return_attn=True)
 
-        x = self.resblocks(x)
-        pdb.set_trace()
+            # 2. Check if we should prune after this layer
+            if pruning_plan and i in pruning_plan:
+                k = pruning_plan[i]
+                x = self.prune_tokens(x, attn_weights, k)
+                
+                # Debugging print for your research
+                print(f"Layer {i} pruned. New shape: {x.shape}")
 
         return x
+
+    def prune_tokens(self, x, attn_weights, k):
+        """
+        x: [Seq, Batch, Width] e.g., [50, 1, 768]
+        attn_weights: [Batch, Seq, Seq] OR [Batch, Heads, Seq, Seq]
+        """
+        # 1. Handle Head Averaging
+        if attn_weights.dim() == 4:
+            # If it's [Batch, Heads, 50, 50], average the heads
+            cls_attn = attn_weights.mean(dim=1) 
+        else:
+            # If it's already [Batch, 50, 50], just use it
+            cls_attn = attn_weights
+
+        # 2. Extract [CLS] focus
+        # We want attention from CLS (row 0) to all other patches (cols 1 to end)
+        # Shape of cls_attn: [Batch, 50, 50] -> Result: [Batch, 49]
+        cls_to_patches = cls_attn[:, 0, 1:]
+
+        # 3. Get Top-K indices
+        _, topk_indices = torch.topk(cls_to_patches, k - 1, dim=-1)
+
+        # 4. Filter x
+        # CLIP's x is [Seq, Batch, Width]. We keep row 0 (CLS) and top-k rows.
+        cls_token = x[0:1] # [1, Batch, Width]
+        
+        # To use topk_indices (which is [Batch, K-1]), we loop through the batch
+        batch_size = x.shape[1]
+        pruned_batches = []
+        
+        for b in range(batch_size):
+            # x[1:, b] is all patches for this specific image in the batch
+            # We select only the ones at topk_indices[b]
+            selected_patches = x[1:, b][topk_indices[b]] # [K-1, Width]
+            pruned_batches.append(selected_patches)
+
+        # Stack them back: [K-1, Batch, Width]
+        patch_tokens = torch.stack(pruned_batches, dim=1)
+
+        # Return the final condensed sequence [K, Batch, Width]
+        return torch.cat([cls_token, patch_tokens], dim=0)
 
 
 class VisionTransformer(nn.Module):
@@ -228,7 +323,7 @@ class VisionTransformer(nn.Module):
         self.positional_embedding = nn.Parameter(scale * torch.randn((input_resolution // patch_size) ** 2 + 1, width))
         self.ln_pre = LayerNorm(width)
 
-        self.transformer = Transformer(width, layers, heads)
+        self.transformer = TransformerP(width, layers, heads)
 
         self.ln_post = LayerNorm(width)
         self.proj = nn.Parameter(scale * torch.randn(width, output_dim))
@@ -242,7 +337,7 @@ class VisionTransformer(nn.Module):
         x = self.ln_pre(x)
 
         x = x.permute(1, 0, 2)  # NLD -> LND
-        x = self.transformer(x)
+        x = self.transformer(x, {5: 25})  # apply token pruning after layer 5, keeping only 25 tokens
         x = x.permute(1, 0, 2)  # LND -> NLD
 
         x = self.ln_post(x[:, 0, :])
@@ -292,7 +387,7 @@ class CLIP(nn.Module):
                 output_dim=embed_dim
             )
 
-        self.transformer = Transformer(
+        self.transformer = TransformerP(
             width=transformer_width,
             layers=transformer_layers,
             heads=transformer_heads,
