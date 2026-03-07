@@ -234,7 +234,7 @@ class ResidualAttentionBlock(nn.Module):
 
 #         return x
     
-class TransformerP(nn.Module):
+class Transformer(nn.Module):
     """This is a copy of the original CLIP transformer, but with the forward function modified to allow for token pruning"""
     def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None):
         super().__init__()
@@ -252,6 +252,7 @@ class TransformerP(nn.Module):
         pruning_plan: Dict mapping {layer_index: num_tokens_to_keep}
                       Example: {5: 25} means after Layer 5, keep only 25 tokens.
         """
+        pruning_indices = {}
         print(f"Initial shape: {x.shape}")
         for i, block in enumerate(self.resblocks):
             # 1. Run the standard transformer block
@@ -262,12 +263,12 @@ class TransformerP(nn.Module):
             # 2. Check if we should prune after this layer
             if pruning_plan and i in pruning_plan:
                 k = pruning_plan[i]
-                x = self.prune_tokens(x, attn_weights, k)
+                x, indices = self.prune_tokens(x, attn_weights, k)
+                pruning_indices[i] = indices
                 
-                # Debugging print for your research
                 print(f"Layer {i} pruned. New shape: {x.shape}")
 
-        return x
+        return x, pruning_indices
 
     def prune_tokens(self, x, attn_weights, k):
         """
@@ -308,8 +309,7 @@ class TransformerP(nn.Module):
         patch_tokens = torch.stack(pruned_batches, dim=1)
 
         # Return the final condensed sequence [K, Batch, Width]
-        return torch.cat([cls_token, patch_tokens], dim=0)
-
+        return torch.cat([cls_token, patch_tokens], dim=0), topk_indices
 
 class VisionTransformer(nn.Module):
     def __init__(self, input_resolution: int, patch_size: int, width: int, layers: int, heads: int, output_dim: int):
@@ -323,7 +323,7 @@ class VisionTransformer(nn.Module):
         self.positional_embedding = nn.Parameter(scale * torch.randn((input_resolution // patch_size) ** 2 + 1, width))
         self.ln_pre = LayerNorm(width)
 
-        self.transformer = TransformerP(width, layers, heads)
+        self.transformer = Transformer(width, layers, heads)
 
         self.ln_post = LayerNorm(width)
         self.proj = nn.Parameter(scale * torch.randn(width, output_dim))
@@ -337,7 +337,9 @@ class VisionTransformer(nn.Module):
         x = self.ln_pre(x)
 
         x = x.permute(1, 0, 2)  # NLD -> LND
-        x = self.transformer(x, {5: 25})  # apply token pruning after layer 5, keeping only 25 tokens
+        x, all_indices = self.transformer(x, {5: 25})  # apply token pruning after layer 5, keeping only 25 tokens
+
+        # x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
 
         x = self.ln_post(x[:, 0, :])
@@ -345,7 +347,8 @@ class VisionTransformer(nn.Module):
         if self.proj is not None:
             x = x @ self.proj
 
-        return x
+        return x, all_indices
+        # return x
 
 
 class CLIP(nn.Module):
@@ -387,7 +390,7 @@ class CLIP(nn.Module):
                 output_dim=embed_dim
             )
 
-        self.transformer = TransformerP(
+        self.transformer = Transformer(
             width=transformer_width,
             layers=transformer_layers,
             heads=transformer_heads,
@@ -453,7 +456,7 @@ class CLIP(nn.Module):
 
         x = x + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  # NLD -> LND
-        x = self.transformer(x)
+        x, y = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
         x = self.ln_final(x).type(self.dtype)
 
@@ -464,7 +467,7 @@ class CLIP(nn.Module):
         return x
 
     def forward(self, image, text):
-        image_features = self.encode_image(image)
+        image_features, all_indices = self.encode_image(image)
         text_features = self.encode_text(text)
 
         # normalized features
@@ -477,7 +480,7 @@ class CLIP(nn.Module):
         logits_per_text = logits_per_image.t()
 
         # shape = [global_batch_size, global_batch_size]
-        return logits_per_image, logits_per_text
+        return logits_per_image, logits_per_text, all_indices
 
 
 def convert_weights(model: nn.Module):

@@ -41,17 +41,17 @@ def iterate_gaussian_noise(image, n: int) -> list:
     output = []
     image = cv2.imread(image)
     # Default is set to 128 as the maximum SD
-    maximum = 128
+    maximum = 64
 
     for i in range(n + 1):
         temp = add_gaussian_noise(image, maximum*i/n)
-        print(maximum*i/n)
-        cv2.imshow('Gaussian Noise', temp)
-        cv2.waitKey(0)
+        # print(maximum*i/n)
+        # cv2.imshow('Gaussian Noise', temp)
+        # cv2.waitKey(0)
         color_coverted = cv2.cvtColor(temp, cv2.COLOR_BGR2RGB)
 
-        pil_img = Image.fromarray(color_coverted)
-        output.append(pil_img)
+        # pil_img = Image.fromarray(color_coverted)
+        output.append(color_coverted)
     
     return output
                       
