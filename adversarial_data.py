@@ -8,13 +8,40 @@ def add_gaussian_noise(image, sigma):
     """
     # Generate Gaussian noise
     mean = 0
-    noise = np.random.normal(mean, sigma, image.shape).astype('uint8')
+    noise = np.random.normal(mean, sigma, image.shape)
     # Add the noise to the image
-    noisy_image = cv2.add(image, noise)
+    noisy_image = np.clip(image.astype(float) + noise, 0, 255).astype('uint8')
 
     return np.clip(noisy_image, 0, 255)
 
+def iterate_gaussian_noise(image, n: int) -> list:
+    """
+    Simulates real word corruption of data
+    Takes in an image and returns a list of n noisy versions, OpenCV format.
+    """
+    if n <= 1:
+        return [image] if isinstance(image, np.ndarray) else [cv2.imread(image)]
 
+    if isinstance(image, str):
+        image = cv2.imread(image)
+
+    # Number of images returned
+    output = []
+
+    # Default is set to 128 as the maximum SD
+    maximum = 128
+
+    for i in range(n):
+        current_sigma = maximum * i / (n - 1)
+        temp = add_gaussian_noise(image, current_sigma)
+        # print(current_sigma)
+        # cv2.imshow('Gaussian Noise', temp)
+        # cv2.waitKey(0)
+        output.append(temp)
+    
+    # cv2.destroyAllWindows()
+    return output
+                      
 def add_salt_and_pepper(image, prob):
     """
     Prob: 0-1
@@ -31,30 +58,6 @@ def add_salt_and_pepper(image, prob):
     output[tuple(coords)] = 0
     return output
 
-def iterate_gaussian_noise(image, n: int) -> list:
-    """
-    Simulates real word corruption of data
-    Takes in an image and returns a list of n noisy versions, in PIL format.
-    """
-    n = n - 1
-    # Number of images returned
-    output = []
-    image = cv2.imread(image)
-    # Default is set to 128 as the maximum SD
-    maximum = 64
-
-    for i in range(n + 1):
-        temp = add_gaussian_noise(image, maximum*i/n)
-        # print(maximum*i/n)
-        # cv2.imshow('Gaussian Noise', temp)
-        # cv2.waitKey(0)
-        color_coverted = cv2.cvtColor(temp, cv2.COLOR_BGR2RGB)
-
-        # pil_img = Image.fromarray(color_coverted)
-        output.append(color_coverted)
-    
-    return output
-                      
 def iterate_salt_pepper(image, n: int) -> list:
     """
     Simulates dead pixels

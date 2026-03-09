@@ -213,28 +213,25 @@ class ResidualAttentionBlock(nn.Module):
         return x
 
 
-# class Transformer(nn.Module):
-#     def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None):
-#         super().__init__()
-#         self.width = width
-#         self.layers = layers
-#         # Each layer is already conjoined together here; resblocks is a sequential container of a ResidualAttentionBlock (a single layer of the transformer)
-#         self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
-
-#     def forward(self, x: torch.Tensor):
-#         # implementation of dropping tokens here (maybe)
-#         print(1234)
-#         import pdb; pdb.set_trace()
-#         # x.shape: tensor with (sequence length (input tokens + CLS token), batch size (# images), self.width (dimensions of the vector embedding passed down)
-#         # Therefore, for x.shape = [50, 1, 768]:
-#         # x therefore is therefore a tensor matrix with [50/num tokens] dimensions, and each one contains a 1x768 matrix vector embedding representing it
-
-#         x = self.resblocks(x)
-#         pdb.set_trace()
-
-#         return x
-    
 class Transformer(nn.Module):
+    def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None):
+        super().__init__()
+        self.width = width
+        self.layers = layers
+        # Each layer is already conjoined together here; resblocks is a sequential container of a ResidualAttentionBlock (a single layer of the transformer)
+        self.resblocks = nn.Sequential(*[ResidualAttentionBlock(width, heads, attn_mask) for _ in range(layers)])
+
+    def forward(self, x: torch.Tensor):
+        # implementation of dropping tokens here (maybe)
+        # x.shape: tensor with (sequence length (input tokens + CLS token), batch size (# images), self.width (dimensions of the vector embedding passed down)
+        # Therefore, for x.shape = [50, 1, 768]:
+        # x therefore is therefore a tensor matrix with [50/num tokens] dimensions, and each one contains a 1x768 matrix vector embedding representing it
+
+        x = self.resblocks(x)
+
+        return x
+    
+class TransformerP(nn.Module):
     """This is a copy of the original CLIP transformer, but with the forward function modified to allow for token pruning"""
     def __init__(self, width: int, layers: int, heads: int, attn_mask: torch.Tensor = None):
         super().__init__()
@@ -323,12 +320,12 @@ class VisionTransformer(nn.Module):
         self.positional_embedding = nn.Parameter(scale * torch.randn((input_resolution // patch_size) ** 2 + 1, width))
         self.ln_pre = LayerNorm(width)
 
-        self.transformer = Transformer(width, layers, heads)
+        self.transformer = TransformerP(width, layers, heads)
 
         self.ln_post = LayerNorm(width)
         self.proj = nn.Parameter(scale * torch.randn(width, output_dim))
 
-    def forward(self, x: torch.Tensor):
+    def forward(self, x: torch.Tensor, pruning_plan: dict = None):
         x = self.conv1(x)  # shape = [*, width, grid, grid]
         x = x.reshape(x.shape[0], x.shape[1], -1)  # shape = [*, width, grid ** 2]
         x = x.permute(0, 2, 1)  # shape = [*, grid ** 2, width]
@@ -337,7 +334,10 @@ class VisionTransformer(nn.Module):
         x = self.ln_pre(x)
 
         x = x.permute(1, 0, 2)  # NLD -> LND
-        x, all_indices = self.transformer(x, {5: 25})  # apply token pruning after layer 5, keeping only 25 tokens
+        if pruning_plan is not None:
+            x, all_indices = self.transformer(x, pruning_plan) # apply token pruning after layer 5, keeping only 25 tokens
+        else:
+            x, all_indices = self.transformer(x)
 
         # x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
@@ -456,7 +456,7 @@ class CLIP(nn.Module):
 
         x = x + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  # NLD -> LND
-        x, y = self.transformer(x)
+        x = self.transformer(x)
         x = x.permute(1, 0, 2)  # LND -> NLD
         x = self.ln_final(x).type(self.dtype)
 
@@ -466,8 +466,11 @@ class CLIP(nn.Module):
 
         return x
 
-    def forward(self, image, text):
-        image_features, all_indices = self.encode_image(image)
+    def forward(self, image, text, pruning_plan: dict = None):
+        if pruning_plan is not None and isinstance(self.visual, VisionTransformer):
+            image_features, all_indices = self.visual(image.type(self.dtype), pruning_plan)
+        else:
+            image_features, all_indices = self.encode_image(image)
         text_features = self.encode_text(text)
 
         # normalized features

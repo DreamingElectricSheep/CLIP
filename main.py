@@ -49,7 +49,7 @@ def visualize_pruning(image_bgr, topk_indices, grid_size=7, dim_factor=0.3):
         vis_img[y1:y2, x1:x2] = image_bgr[y1:y2, x1:x2]
         
         # Draw white border for clarity
-        cv2.rectangle(vis_img, (x1, y1), (x2, y2), (255, 255, 255), 1)
+        # cv2.rectangle(vis_img, (x1, y1), (x2, y2), (255, 255, 255), 1)
 
     return vis_img
 
@@ -79,10 +79,10 @@ for entry in path.iterdir():
     predictions[entry.name] = []
 
     # Predicting
-    plan = {4: 25} # Prune to 25 tokens after Layer 4
+    pruning_plan = {4: 25} # Prune to 25 tokens after Layer 4
     for image in image_gauss_variants:
         # 1. Convert BGR (OpenCV default) to RGB
-        img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        img_rgb = image
 
         copy = img_rgb.copy()
         
@@ -94,13 +94,13 @@ for entry in path.iterdir():
         image = preprocess(pil_img).unsqueeze(0).to(device)
 
         with torch.no_grad():
-            logits_per_image, logits_per_text, all_indices = model(image, text_inputs)
+            logits_per_image, logits_per_text, all_indices = model(image, text_inputs, pruning_plan)
             probs = logits_per_image.softmax(dim=-1).cpu()[0]
         for label, prob in zip(labels2, probs):
             prob = float(prob)
         predictions[entry.name].append(dict(zip(labels2, probs)))
         import pdb; pdb.set_trace()
-        top_indices = all_indices[5][0] # Layer 6, Batch Index 0
+        top_indices = all_indices[4][0] # Layer 4, Batch Index 0
         # 3. Generate and save the visualization
         result_view = visualize_pruning(copy, top_indices)
         cv2.imwrite("pruning_vis.png", result_view)
