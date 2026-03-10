@@ -165,7 +165,7 @@ for pruning_plan in pruning_plans:
 import csv
 
 # 1. Define the CSV filename
-csv_file = "clip_pruning_experiment.csv"
+csv_file = "experiment_data/clip_pruning_experiment.csv"
 
 header = ["Filename", "Pruning_Layer", "Tokens_Kept", "Variant_ID"] + labels2
 vis_filename = f"pruning_vis/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
