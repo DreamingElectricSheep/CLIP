@@ -13,10 +13,10 @@ import numpy as np
 # 1. Load the model and processor
 print("Imported clip from:", clip.__file__)
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/32", device=device)
+model, preprocess = clip.load("ViT-B/16", device=device)
 
 
-def visualize_pruning(image_bgr, topk_indices, grid_size=7, dim_factor=0.3):
+def visualize_pruning(image_bgr, topk_indices, grid_size, dim_factor=0.3):
     """
     image_bgr: NumPy array of any size (H, W, 3).
     topk_indices: The indices (0-48) returned by the transformer.
@@ -69,8 +69,8 @@ path = Path('image_testing')
 
 repetitions = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
 
-pruning_plans = [None, {2: 25}, {6: 25}, {10: 25}]
-# pruning_plans = [{2: 25}]
+# pruning_plans = [None, {2: 25}, {6: 25}, {10: 25}]
+pruning_plans = [{2: 100}]
 for pruning_plan in pruning_plans:
     # For each repetition (to get multiple data points for each image)
     for rep in repetitions:
@@ -122,7 +122,7 @@ for pruning_plan in pruning_plans:
                 # Extract indices for the specific layer we just pruned
                 top_indices = all_indices.get(layer_key, [None])[0] if pruning_plan else None
                 
-                result_view = visualize_pruning(copy, top_indices)
+                result_view = visualize_pruning(copy, top_indices, grid_size=14)
                 
                 # Filename: vis_church_var0_layer2.png
                 vis_filename = f"pruning_vis/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
