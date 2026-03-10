@@ -250,11 +250,11 @@ class TransformerP(nn.Module):
                       Example: {5: 25} means after Layer 5, keep only 25 tokens.
         """
         pruning_indices = {}
-        print(f"Initial shape: {x.shape}")
+        # print(f"Initial shape: {x.shape}")
         for i, block in enumerate(self.resblocks):
             # 1. Run the standard transformer block
             # To prune based on attention, the block must return weights.
-            # If your block doesn't return weights yet, see Step 2 below.
+            # Forward of ResidualAttentionBlock is modified to optionally return attn_weights when return_attn=True
             x, attn_weights = block(x, return_attn=True)
 
             # 2. Check if we should prune after this layer
@@ -263,7 +263,7 @@ class TransformerP(nn.Module):
                 x, indices = self.prune_tokens(x, attn_weights, k)
                 pruning_indices[i] = indices
                 
-                print(f"Layer {i} pruned. New shape: {x.shape}")
+                # print(f"Layer {i} pruned. New shape: {x.shape}")
 
         return x, pruning_indices
 
@@ -271,6 +271,7 @@ class TransformerP(nn.Module):
         """
         x: [Seq, Batch, Width] e.g., [50, 1, 768]
         attn_weights: [Batch, Seq, Seq] OR [Batch, Heads, Seq, Seq]
+        k: number of tokens to keep (including CLS)
         """
         # 1. Handle Head Averaging
         if attn_weights.dim() == 4:
