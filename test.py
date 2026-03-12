@@ -24,5 +24,8 @@
 # print("Probabilities:")
 # for label, prob in zip(["a diagram", "a dog", "a cat", "text logo", "a screenshot"], probs):
 #     print(f"{label}: {prob.item():.4f}")
-pruning_plan = {4: 25} 
-print(pruning_plan.keys(), pruning_plan.values())
+# pruning_plan = {4: 25} 
+# print(pruning_plan.keys(), pruning_plan.values())
+
+a = 32**2
+print(a // 16)

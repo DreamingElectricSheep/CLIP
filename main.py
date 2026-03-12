@@ -57,7 +57,8 @@ def visualize_pruning(image_bgr, topk_indices, grid_size, dim_factor=0.3):
 # Main
 # labels = ["cat", "dog", "forest", "office", "desk", "library", "library desk", "parrot", "monkey", "snake"]
 # labels2 = ["parrot", "office", "desk", "library", "sky", "glasses", "desert"] # Book
-labels2 = ["church outdoor", "shop", "monestary", "chapel", "library", "building", "road", "street"]
+labels2 = ["church outdoor", "shop", "monestary", "chapel", "library", "building", "road", "street", "coffee shop", "conference center", "squirrel monkey", "scuba diver", "red panda", "ladybird", "tree", "hamburger", "steak", "pizza", "fish", "eagle"]
+# labels2 = ["hamburger", "tree"]
 # Tokenize and encode
 text_inputs = clip.tokenize([f"a photo of a {c}" for c in labels2]).to(device)
 
@@ -66,11 +67,15 @@ names = []
 n = 5
 path = Path('image_testing')
 
-
+model_name = 32
 repetitions = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+repetitions = ["a"]
+if model_name == 32:
+    # pruning_plans = [None, {2: 25}, {6: 25}, {10: 25}] # For B/32
+    pruning_plans = [{10: 25}]
+elif model_name == 16:
+    pruning_plans = [None, {2: 98}, {6: 98}, {10: 98}] # For B/16
 
-# pruning_plans = [None, {2: 25}, {6: 25}, {10: 25}]
-pruning_plans = [{2: 100}]
 for pruning_plan in pruning_plans:
     # For each repetition (to get multiple data points for each image)
     for rep in repetitions:
@@ -97,9 +102,6 @@ for pruning_plan in pruning_plans:
                 # 2. Convert to RGB for the CLIP model
                 img_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                 pil_img = Image.fromarray(img_rgb)
-                
-                # 2. Convert NumPy array to PIL Image
-                pil_img = Image.fromarray(img_rgb)
 
                 # 3. Apply CLIP preprocessing
                 # This returns a Torch Tensor: shape [3, 224, 224]
@@ -122,44 +124,16 @@ for pruning_plan in pruning_plans:
                 # Extract indices for the specific layer we just pruned
                 top_indices = all_indices.get(layer_key, [None])[0] if pruning_plan else None
                 
-                result_view = visualize_pruning(copy, top_indices, grid_size=14)
+                if model_name == 32:
+                    grid_size = 7  # For ViT-B/32
+                elif model_name == 16:
+                    grid_size = 14 # For ViT-B/16
+
+                result_view = visualize_pruning(copy, top_indices, grid_size = grid_size)
                 
                 # Filename: vis_church_var0_layer2.png
-                vis_filename = f"pruning_vis/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
+                vis_filename = f"pruning_vis/{entry.name}/{model_name}/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
                 cv2.imwrite(vis_filename, result_view)
-                # for label, prob in zip(labels2, probs):
-                #     prob = float(prob)
-                # predictions[f"{entry.name}_{rep}"].append(dict(zip(labels2, probs)))
-                # top_indices = all_indices[list(pruning_plan.keys())[0]][0] if pruning_plan else None
-                # # 3. Generate and save the visualization
-                # result_view = visualize_pruning(copy, top_indices)
-                # if pruning_plan is None:
-                #     vis_filename = f"pruning_vis/{entry.stem}_gauss_0_0_{rep}_{i}.png"
-                # else:
-                #     # list(pruning_plan.keys())[0] and list(pruning_plan.values())[0] are used to extract the layer and token info for naming the file
-                #     vis_filename = f"pruning_vis/{entry.stem}_gauss_{list(pruning_plan.keys())[0]}_{list(pruning_plan.values())[0]}_{rep}_{i}.png"
-                # cv2.imwrite(vis_filename, result_view)
-
-
-# # Printing the results
-# counter = 0
-# i = 0
-# # For each image
-# for item in predictions:
-#     # For each variant of this image
-#     for i, image_score in enumerate(predictions[item]):
-#         print(f"Filename: {item}. {i + 1}/{n}")
-#         print()
-#         for label, score in image_score.items():
-#             print(f"{label}: {score:.2%}")
-#         print("")
-#     print("")
-#     print("")
-
-#     counter += 1
-#     if counter % n == 0:
-#         counter = 0
-#         i += 1
 
 # Exporting to CSV
 import csv
@@ -168,7 +142,6 @@ import csv
 csv_file = "experiment_data/clip_pruning_experiment.csv"
 
 header = ["Filename", "Pruning_Layer", "Tokens_Kept", "Variant_ID"] + labels2
-vis_filename = f"pruning_vis/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
 
 with open(csv_file, mode='w', newline='') as f:
     writer = csv.writer(f)
