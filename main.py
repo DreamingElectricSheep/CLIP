@@ -7,13 +7,12 @@ import adversarial_data as noise
 import cv2
 import numpy as np
 
-# .venv\Scripts\activate
-# path = Path('image_testing')
 
 # 1. Load the model and processor
 print("Imported clip from:", clip.__file__)
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model, preprocess = clip.load("ViT-B/16", device=device)
+model_name = 32
+model, preprocess = clip.load(f"ViT-B/{model_name}", device=device)
 
 
 def visualize_pruning(image_bgr, topk_indices, grid_size, dim_factor=0.3):
@@ -55,10 +54,7 @@ def visualize_pruning(image_bgr, topk_indices, grid_size, dim_factor=0.3):
 
 
 # Main
-# labels = ["cat", "dog", "forest", "office", "desk", "library", "library desk", "parrot", "monkey", "snake"]
-# labels2 = ["parrot", "office", "desk", "library", "sky", "glasses", "desert"] # Book
-labels2 = ["church outdoor", "shop", "monestary", "chapel", "library", "building", "road", "street", "coffee shop", "conference center", "squirrel monkey", "scuba diver", "red panda", "ladybird", "tree", "hamburger", "steak", "pizza", "fish", "eagle"]
-# labels2 = ["hamburger", "tree"]
+labels2 = ["church outdoor",  "coffee shop", "conference center", "squirrel monkey", "scuba diver", "red panda", "ladybird", "hamburger", "tree", "shop", "monestary", "chapel", "library", "building", "road", "street", "steak", "pizza", "fish", "eagle"]
 # Tokenize and encode
 text_inputs = clip.tokenize([f"a photo of a {c}" for c in labels2]).to(device)
 
@@ -67,15 +63,16 @@ names = []
 n = 5
 path = Path('image_testing')
 
-model_name = 32
+
 repetitions = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
-repetitions = ["a"]
+# repetitions = ["a"]
 if model_name == 32:
-    # pruning_plans = [None, {2: 25}, {6: 25}, {10: 25}] # For B/32
-    pruning_plans = [{10: 25}]
+    pruning_plans = [None, {2: 25}, {6: 25}, {10: 25}] # For B/32
 elif model_name == 16:
+    # pruning_plans = [None, {2: 98}]
     pruning_plans = [None, {2: 98}, {6: 98}, {10: 98}] # For B/16
 
+print(f"--- Starting experiment with model ViT-B/{model_name} ---")
 for pruning_plan in pruning_plans:
     # For each repetition (to get multiple data points for each image)
     for rep in repetitions:
@@ -88,7 +85,9 @@ for pruning_plan in pruning_plans:
             # brightened_variants = noise.brightness(f"{path}/{entry.name}", 4, 50)
             # pixelated_variants = noise.pixelate(f"{path}/{entry.name}", n)
 
-            names.append(entry.name)
+            if entry.stem not in names:
+                names.append(entry.stem)
+
             layer_key = list(pruning_plan.keys())[0] if pruning_plan else "None"
             num_kept = list(pruning_plan.values())[0] if pruning_plan else "All"
 
@@ -131,30 +130,36 @@ for pruning_plan in pruning_plans:
 
                 result_view = visualize_pruning(copy, top_indices, grid_size = grid_size)
                 
-                # Filename: vis_church_var0_layer2.png
-                vis_filename = f"pruning_vis/{entry.name}/{model_name}/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
+                # Saving the image
+                vis_filename = f"pruning_vis/{model_name}/{entry.stem}/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
                 cv2.imwrite(vis_filename, result_view)
+    print(f"--- Completed pruning plan: {pruning_plan} ---")
 
 # Exporting to CSV
 import csv
 
 # 1. Define the CSV filename
-csv_file = "experiment_data/clip_pruning_experiment.csv"
+for name in names:
+    csv_file = f"experiment_data/{name}_experiment_data.csv"
 
-header = ["Filename", "Pruning_Layer", "Tokens_Kept", "Variant_ID"] + labels2
+    header = ["Filename", "Pruning_Layer", "Tokens_Kept", "Variant_ID"] + labels2
 
-with open(csv_file, mode='w', newline='') as f:
-    writer = csv.writer(f)
-    writer.writerow(header)
+    with open(csv_file, mode='w', newline='') as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
 
-    for filename, results in predictions.items():
-        for res in results:
-            row = [
-                filename, 
-                res["layer"], 
-                res["kept"],
-                res["variant"] 
-            ] + [res["scores"].get(lbl, 0) for lbl in labels2]
-            writer.writerow(row)
+        for filename, results in predictions.items():
+            # Filtering results for each image
+            if filename.split(".")[0] == name:
+                for res in results:
+                    row = [
+                        filename, 
+                        res["layer"], 
+                        res["kept"],
+                        res["variant"] 
+                    ] + [res["scores"].get(lbl, 0) for lbl in labels2]
+                    writer.writerow(row)
+            else:
+                continue
 
-print(f"--- Export Complete! Data saved to {csv_file} ---")
+    print(f"--- Export Complete! Data saved to {csv_file} ---")
