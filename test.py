@@ -24,8 +24,13 @@
 # print("Probabilities:")
 # for label, prob in zip(["a diagram", "a dog", "a cat", "text logo", "a screenshot"], probs):
 #     print(f"{label}: {prob.item():.4f}")
-pruning_plan = {4: 25, 8: 25, 12: 25} 
-# print(pruning_plan.keys(), pruning_plan.values())
-a = "123_4214"
-print(a.split("_")[0])
-print(pruning_plan.items())
+# pruning_plan = {4: 25, 8: 25, 12: 25} 
+# # print(pruning_plan.keys(), pruning_plan.values())
+# a = "123_4214"
+# print(a.split("_")[0])
+# print(pruning_plan.items())
+
+selected_tokens = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+for n, i in enumerate(selected_tokens):
+    selected_tokens[n] = i + 1
+print(selected_tokens)

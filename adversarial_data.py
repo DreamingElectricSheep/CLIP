@@ -2,22 +2,50 @@ import cv2
 import numpy as np
 from PIL import Image
 
-def add_gaussian_noise(image, sigma):
+def add_gaussian_noise(image, sigma, grid_size=None, box_size=None, center_patch=None):
     """
     Sigma: 0-128
+    grid_size: The number of patches per side (e.g., 14 for B/16)
+    box_size: int (n), creates an n x n box of noisy patches.
+    center_patch: tuple (row, col) defining the center of the box.
     """
     # Generate Gaussian noise
     mean = 0
     noise = np.random.normal(mean, sigma, image.shape)
+
+    if box_size is not None and center_patch is not None:
+        mask = np.zeros(image.shape, dtype=bool)
+        h, w, _ = image.shape
+        patch_h, patch_w = h // grid_size, w // grid_size
+        
+        c_row, c_col = center_patch
+        # Calculate start/end offsets to keep the box centered
+        # e.g., if n=3, radius is 1. (Row-1 to Row+1)
+        radius = box_size // 2 
+        
+        # Calculate grid boundaries (clamped to prevent index errors)
+        row_start = max(0, c_row - radius)
+        row_end = min(grid_size, c_row + radius + (1 if box_size % 2 != 0 else 0))
+        col_start = max(0, c_col - radius)
+        col_end = min(grid_size, c_col + radius + (1 if box_size % 2 != 0 else 0))
+
+        # Apply noise only to the pixels within the n x n patch range
+        mask[row_start * patch_h : row_end * patch_h, 
+             col_start * patch_w : col_end * patch_w, :] = True
+            
+        noise[~mask] = 0
+
     # Add the noise to the image
     noisy_image = np.clip(image.astype(float) + noise, 0, 255).astype('uint8')
 
     return np.clip(noisy_image, 0, 255)
 
-def iterate_gaussian_noise(image, n: int) -> list:
+def iterate_gaussian_noise(image, n: int, grid_size=None, box_size=None, center_patch=None) -> list:
     """
     Simulates real word corruption of data
     Takes in an image and returns a list of n noisy versions, OpenCV format.
+    
+    grid_size, box_size and center_patch are passed through to allow regional stress-testing.
     """
     if n <= 1:
         return [image] if isinstance(image, np.ndarray) else [cv2.imread(image)]
@@ -32,8 +60,11 @@ def iterate_gaussian_noise(image, n: int) -> list:
     maximum = 128
 
     for i in range(n):
+        if grid_size is not None and box_size is not None and center_patch is not None and i == 0:
+            # Skip the first image
+            continue
         current_sigma = maximum * i / (n - 1)
-        temp = add_gaussian_noise(image, current_sigma)
+        temp = add_gaussian_noise(image, current_sigma, grid_size, box_size, center_patch)
         # print(current_sigma)
         # cv2.imshow('Gaussian Noise', temp)
         # cv2.waitKey(0)

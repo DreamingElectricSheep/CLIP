@@ -11,7 +11,7 @@ import numpy as np
 # 1. Load the model and processor
 print("Imported clip from:", clip.__file__)
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model_name = 32
+model_name = 16
 model, preprocess = clip.load(f"ViT-B/{model_name}", device=device)
 
 
@@ -54,7 +54,7 @@ def visualize_pruning(image_bgr, topk_indices, grid_size, dim_factor=0.3):
 
 
 # Main
-labels2 = ["church outdoor",  "coffee shop", "conference center", "squirrel monkey", "scuba diver", "red panda", "ladybird", "hamburger", "tree", "shop", "monestary", "chapel", "library", "building", "road", "street", "steak", "pizza", "fish", "eagle"]
+labels2 = ["church outdoor",  "coffee shop", "conference center", "squirrel monkey", "scuba diver", "red panda", "ladybird", "hamburger", "tree", "shop", "monestary", "library", "building", "road", "steak", "pizza", "fish", "eagle"]
 # Tokenize and encode
 text_inputs = clip.tokenize([f"a photo of a {c}" for c in labels2]).to(device)
 
@@ -65,12 +65,17 @@ path = Path('image_testing')
 
 
 repetitions = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
+box_size = 5
+center_patch = (6, 7) # Center
+
 # repetitions = ["a"]
 if model_name == 32:
     pruning_plans = [None, {2: 25}, {6: 25}, {10: 25}] # For B/32
+    grid_size = 7
 elif model_name == 16:
     # pruning_plans = [None, {2: 98}]
     pruning_plans = [None, {2: 98}, {6: 98}, {10: 98}] # For B/16
+    grid_size = 14
 
 print(f"--- Starting experiment with model ViT-B/{model_name} ---")
 for pruning_plan in pruning_plans:
@@ -79,7 +84,7 @@ for pruning_plan in pruning_plans:
         # For every image
         for entry in path.iterdir():
             # Adversarial data
-            image_gauss_variants = noise.iterate_gaussian_noise(f"{path}/{entry.name}", n)
+            image_gauss_variants = noise.iterate_gaussian_noise(f"{path}/{entry.name}", n, grid_size, box_size, center_patch)
             # image_salt_variants = noise.iterate_salt_pepper(f"{path}/{entry.name}", n)
             # rotated_variants = noise.rotation(f"{path}/{entry.name}")
             # brightened_variants = noise.brightness(f"{path}/{entry.name}", 4, 50)
@@ -122,16 +127,11 @@ for pruning_plan in pruning_plans:
                 # --- Visualizing ---
                 # Extract indices for the specific layer we just pruned
                 top_indices = all_indices.get(layer_key, [None])[0] if pruning_plan else None
-                
-                if model_name == 32:
-                    grid_size = 7  # For ViT-B/32
-                elif model_name == 16:
-                    grid_size = 14 # For ViT-B/16
-
                 result_view = visualize_pruning(copy, top_indices, grid_size = grid_size)
                 
                 # Saving the image
-                vis_filename = f"pruning_vis/{model_name}/{entry.stem}/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
+                # vis_filename = f"pruning_vis/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
+                vis_filename = f"pruning_vis/{model_name}p/{entry.stem}/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
                 cv2.imwrite(vis_filename, result_view)
     print(f"--- Completed pruning plan: {pruning_plan} ---")
 
@@ -140,7 +140,7 @@ import csv
 
 # 1. Define the CSV filename
 for name in names:
-    csv_file = f"experiment_data/{name}_experiment_data.csv"
+    csv_file = f"experiment_data/{model_name}p/{name}_p_experiment_data.csv"
 
     header = ["Filename", "Pruning_Layer", "Tokens_Kept", "Variant_ID"] + labels2
 
