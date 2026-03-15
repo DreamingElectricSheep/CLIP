@@ -30,7 +30,18 @@
 # print(a.split("_")[0])
 # print(pruning_plan.items())
 
-selected_tokens = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-for n, i in enumerate(selected_tokens):
-    selected_tokens[n] = i + 1
-print(selected_tokens)
+# selected_tokens = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+# for n, i in enumerate(selected_tokens):
+#     selected_tokens[n] = i + 1
+# print(selected_tokens)
+
+# from matplotlib import text
+import torch
+from PIL import Image
+import clip
+from pathlib import Path
+import adversarial_data as noise
+import cv2
+import numpy as np
+
+print(8172031283)
