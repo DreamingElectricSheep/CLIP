@@ -6,17 +6,17 @@ import matplotlib.pyplot as plt
 """
 DATASET 1: GLOBAL NOISE
 """
-# average_16 = "61.29% 9.22% 44.11% 62.35% 68.06% 31.86% 38.66% 66.53% 67.01% 49.26% 47.17% 66.74% 70.49% 42.98% 40.98% 62.35% 62.04% 45.83% 45.42% 60.72% 97.00% 98.24% 84.85% 97.46% 96.44% 94.23% 76.90% 96.56% 96.90% 93.98% 83.97% 97.14% 96.94% 87.00% 83.21% 96.84% 94.59% 78.78% 79.34% 95.99% 99.92% 99.85% 99.84% 99.83% 99.93% 99.89% 99.87% 99.88% 99.94% 99.90% 99.90% 99.90% 99.96% 99.94% 99.92% 99.89% 99.95% 99.86% 99.90% 99.85% 99.05% 99.32% 98.74% 99.10% 98.98% 99.52% 99.37% 99.26% 99.67% 99.50% 99.76% 99.68% 99.85% 86.50% 99.73% 99.84% 96.57% 67.79% 84.81% 93.14% 99.99% 99.97% 99.99% 99.99% 99.98% 99.96% 99.98% 99.98% 99.90% 99.19% 99.83% 99.89% 99.29% 71.26% 90.06% 99.32% 83.19% 41.62% 83.23% 73.59% 100.00% 99.99% 100.00% 100.00% 99.99% 90.37% 99.98% 99.98% 99.97% 88.48% 99.96% 99.97% 96.97% 88.76% 93.49% 99.48% 55.76% 23.74% 67.15% 68.09% 99.88% 99.87% 99.86% 99.87% 99.59% 99.50% 99.52% 99.61% 90.27% 98.42% 97.96% 97.73% 78.29% 43.69% 62.79% 78.11% 19.91% 7.25% 35.70% 22.38% 99.99% 99.98% 99.99% 99.99% 99.89% 99.84% 99.86% 99.75% 92.56% 71.74% 91.14% 93.39% 31.55% 16.33% 27.06% 32.04% 0.71% 1.43% 2.11% 0.76%"
+# average_16p = "7.72% 36.35% 42.92% 61.67% 46.12% 16.99% 24.56% 27.16% 32.28% 27.60% 16.98% 16.93% 13.00% 17.23% 19.21% 13.40% 16.32% 15.37% 6.21% 3.09% 98.90% 91.14% 90.56% 89.19% 83.08% 83.71% 91.06% 85.51% 87.16% 63.10% 24.78% 36.09% 40.49% 24.32% 18.49% 5.85% 6.80% 4.01% 3.61% 2.95% 99.89% 99.93% 99.91% 99.92% 99.89% 99.85% 99.89% 99.90% 99.82% 99.24% 97.27% 99.37% 87.51% 89.12% 89.97% 34.60% 62.50% 38.47% 30.12% 32.02% 99.15% 94.79% 92.64% 81.76% 62.05% 98.94% 72.47% 85.85% 61.83% 42.36% 92.11% 55.28% 18.14% 25.17% 7.76% 27.21% 4.05% 7.53% 3.79% 11.70% 54.20% 99.16% 98.34% 73.97% 26.70% 22.20% 99.87% 75.96% 11.57% 7.17% 48.27% 68.09% 32.34% 16.41% 0.56% 37.63% 34.80% 11.36% 0.47% 0.70% 100.00% 88.16% 74.17% 42.41% 18.21% 3.84% 48.86% 37.01% 13.52% 5.18% 25.03% 11.78% 2.23% 0.19% 1.08% 1.82% 1.38% 0.03% 0.03% 0.04% 99.85% 98.84% 94.20% 40.36% 7.93% 2.10% 97.62% 85.58% 39.01% 0.62% 1.35% 14.27% 4.89% 5.73% 9.46% 0.51% 1.81% 0.29% 0.42% 0.04% 99.95% 70.20% 67.28% 8.72% 1.25% 4.27% 41.37% 11.37% 0.71% 0.37% 2.54% 23.70% 0.11% 0.04% 0.06% 0.19% 1.23% 0.01% 0.00% 0.00%"
+# accuracies = [float(p.strip('%')) for p in average_16p.split()]
 
-# accuracies = [float(p.strip('%')) for p in average_16.split()]
-
+# pruning = "78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18 78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18 78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18 78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18 78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18 78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18 78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18 78 78 78 78 78 58 58 58 58 58 38 38 38 38 38 18 18 18 18 18"
 # datasets = ["Church Outdoors", "Coffee Shop", "Conference Center", "Hamburger", 
 #             "Ladybird", "Red Panda", "Scuba Diver", "Squirrel Monkey"]
 
 # data = {
 #     'Dataset': [d for d in datasets for _ in range(20)],
-#     'Pruning Layer': (['None', '2', '6', '10'] * 5) * 8,
-#     'Noise': [n*32 for d in range(8) for n in range(5) for _ in range(4)],
+#     'Pruning amount': [int(x) for x in pruning.split()],
+#     'Noise': ([0, 32, 64, 96, 128] * 4) * 8,
 #     'Accuracy': accuracies
 # }
 
@@ -27,11 +27,11 @@ DATASET 1: GLOBAL NOISE
 # sns.set_context("talk")
 
 # # Graph 1: Detailed view per Dataset
-# g = sns.FacetGrid(df, col="Dataset", col_wrap=4, hue="Pruning Layer", 
+# g = sns.FacetGrid(df, col="Dataset", col_wrap=4, hue="Pruning amount", 
 #                   height=4, aspect=1.5, palette=["#3b0f70", "#8c2981","#db0a3e", "#fe9f6d"])
 # g.set_titles(row_template="{row_name}", col_template="{col_name}")
 # g.map(sns.lineplot, "Noise", "Accuracy", marker="o", linewidth=2)
-# g.add_legend(title="Pruning Layer")
+# g.add_legend(title="Pruning Amount")
 # g.set_axis_labels("Noise Level (SD)", "Accuracy (%)")
 # g.fig.subplots_adjust(top=0.9)
 # g.fig.suptitle("Average Performance Across Different Images", fontsize=24, fontweight='bold')
@@ -40,13 +40,13 @@ DATASET 1: GLOBAL NOISE
 
 # # GRAPH 2: Aggregated Average
 # plt.figure(figsize=(8, 4))
-# sns.lineplot(data=df, x='Noise', y='Accuracy',  hue='Pruning Layer', 
-#              style='Pruning Layer', markers=True, dashes=False, palette=["#3b0f70", "#8c2981","#db0a3e", "#fe9f6d"], linewidth=2, errorbar=None)
+# sns.lineplot(data=df, x='Noise', y='Accuracy',  hue='Pruning amount', 
+#              style='Pruning amount', markers=True, dashes=False, palette=["#3b0f70", "#8c2981","#db0a3e", "#fe9f6d"], linewidth=2, errorbar=None)
 # plt.title("Average Performance Decay Under Noise", fontsize=20, fontweight='bold')
 # plt.ylabel("Average Accuracy (%)")
 # plt.xlabel("Gaussian Noise Level (SD)")
 # plt.xticks(df['Noise'].unique().astype(int))
-# plt.legend(title="Pruning Layer", loc='lower left')
+# plt.legend(title="Pruning Amount", loc='lower left')
 
 # plt.tight_layout()
 # plt.show()
@@ -54,19 +54,21 @@ DATASET 1: GLOBAL NOISE
 """
 DATASET 2: LOCALIZED NOISE
 """
-
 average_16 = "99.28% 90.22% 85.43% 85.60% 98.94% 88.88% 88.11% 89.04% 98.46% 86.50% 87.74% 86.54% 9.05% 8.44% 9.30% 10.87% 99.98% 99.86% 78.32% 17.17% 99.94% 99.27% 44.34% 5.54% 89.44% 56.72% 13.61% 3.00% 7.03% 5.16% 1.78% 3.48% 42.25% 63.47% 7.58% 0.17% 11.83% 1.05% 0.10% 0.04% 3.89% 0.06% 0.02% 0.02% 1.95% 0.03% 0.01% 0.01% 99.45% 91.35% 47.54% 20.11% 30.85% 39.51% 24.58% 4.75% 0.71% 0.16% 0.13% 0.05% 0.20% 0.03% 0.01% 0.02% 85.55% 10.96% 3.39% 0.48% 87.08% 6.00% 5.50% 1.18% 0.95% 8.97% 11.11% 2.41% 0.02% 0.01% 0.01% 0.01%"
 
 accuracies = [float(p.strip('%')) for p in average_16.split()]
+
+pruning = "78 78 78 78 58 58 58 58 38 38 38 38 18 18 18 18 78 78 78 78 58 58 58 58 38 38 38 38 18 18 18 18 78 78 78 78 58 58 58 58 38 38 38 38 18 18 18 18 78 78 78 78 58 58 58 58 38 38 38 38 18 18 18 18 78 78 78 78 58 58 58 58 38 38 38 38 18 18 18 18"
 
 datasets = ["Hamburger", "Ladybird", "Red Panda", "Scuba Diver", "Squirrel Monkey"]
 
 data = {
     'Dataset': [d for d in datasets for _ in range(16)],
-    'Pruning Layer': (['None', '2', '6', '10'] * 5) * 8,
-    'Noise': [(n+1)*32 for d in range(5) for n in range(4) for _ in range(4)],
+    'Pruning amount': [int(x) for x in pruning.split()],
+    'Noise': ([32, 64, 96, 128] * 4) * 5,
     'Accuracy': accuracies
 }
+
 
 df = pd.DataFrame(data)
 
@@ -75,11 +77,11 @@ sns.set_theme(style="whitegrid")
 sns.set_context("talk")
 
 # Graph 1: Detailed view per Dataset
-g = sns.FacetGrid(df, col="Dataset", col_wrap=4, hue="Pruning Layer", 
+g = sns.FacetGrid(df, col="Dataset", col_wrap=3, hue="Pruning amount", 
                   height=4, aspect=1.5, palette=["#3b0f70", "#8c2981","#db0a3e", "#fe9f6d"])
 g.set_titles(row_template="{row_name}", col_template="{col_name}")
 g.map(sns.lineplot, "Noise", "Accuracy", marker="o", linewidth=2)
-g.add_legend(title="Pruning Layer")
+g.add_legend(title="Pruning Amount")
 g.set_axis_labels("Noise Level (SD)", "Accuracy (%)")
 g.fig.subplots_adjust(top=0.9)
 g.fig.suptitle("Average Performance Across Different Images", fontsize=24, fontweight='bold')
@@ -88,13 +90,13 @@ plt.tight_layout(rect=[0.05, 0, 0.85, 0.95])
 
 # GRAPH 2: Aggregated Average
 plt.figure(figsize=(8, 4))
-sns.lineplot(data=df, x='Noise', y='Accuracy',  hue='Pruning Layer', 
-             style='Pruning Layer', markers=True, dashes=False, palette=["#3b0f70", "#8c2981","#db0a3e", "#fe9f6d"], linewidth=2, errorbar=None)
+sns.lineplot(data=df, x='Noise', y='Accuracy',  hue='Pruning amount', 
+             style='Pruning amount', markers=True, dashes=False, palette=["#3b0f70", "#8c2981","#db0a3e", "#fe9f6d"], linewidth=2, errorbar=None)
 plt.title("Average Performance Decay Under Noise", fontsize=20, fontweight='bold')
 plt.ylabel("Average Accuracy (%)")
 plt.xlabel("Gaussian Noise Level (SD)")
 plt.xticks(df['Noise'].unique().astype(int))
-plt.legend(title="Pruning Layer", loc='lower left')
+plt.legend(title="Pruning Amount", loc='lower left')
 
 plt.tight_layout()
 plt.show()

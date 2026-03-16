@@ -68,7 +68,7 @@ repetitions = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
 # repetitions = ["a", "b", "c", "d", "e"]
 box_size = 5
 center_patch = (7, 8) # Center
-# center_patch = None
+center_patch = None
 
 # repetitions = ["a"]
 if model_name == 32:
