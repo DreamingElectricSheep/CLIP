@@ -34,3 +34,7 @@
 # for n, i in enumerate(selected_tokens):
 #     selected_tokens[n] = i + 1
 # print(selected_tokens)
+
+pruning = "None None None None 2 2 2 2 6 6 6 6 10 10 10 10"
+split_pruning = pruning.split()*5
+print(split_pruning)

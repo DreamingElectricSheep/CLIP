@@ -55,16 +55,16 @@ DATASET 1: GLOBAL NOISE
 DATASET 2: LOCALIZED NOISE
 """
 
-average_16 = "99.28% 90.22% 85.43% 85.60% 98.94% 88.88% 88.11% 89.04% 98.46% 86.50% 87.74% 86.54% 9.05% 8.44% 9.30% 10.87% 99.98% 99.86% 78.32% 17.17% 99.94% 99.27% 44.34% 5.54% 89.44% 56.72% 13.61% 3.00% 7.03% 5.16% 1.78% 3.48% 42.25% 63.47% 7.58% 0.17% 11.83% 1.05% 0.10% 0.04% 3.89% 0.06% 0.02% 0.02% 1.95% 0.03% 0.01% 0.01% 99.45% 91.35% 47.54% 20.11% 30.85% 39.51% 24.58% 4.75% 0.71% 0.16% 0.13% 0.05% 0.20% 0.03% 0.01% 0.02% 85.55% 10.96% 3.39% 0.48% 87.08% 6.00% 5.50% 1.18% 0.95% 8.97% 11.11% 2.41% 0.02% 0.01% 0.01% 0.01%"
-
+average_16 = "99.15% 99.16% 98.74% 96.59% 99.47% 97.61% 82.00% 87.49% 99.38% 99.14% 96.24% 92.41% 99.06% 99.09% 98.09% 95.35% 99.99% 99.90% 97.52% 78.73% 99.98% 99.90% 96.81% 76.33% 99.99% 99.92% 97.01% 87.03% 99.99% 99.90% 98.98% 80.49% 100.00% 99.97% 99.07% 95.71% 99.99% 81.87% 30.89% 0.45% 99.99% 99.88% 99.06% 83.98% 100.00% 99.98% 99.07% 87.10% 99.32% 88.26% 54.61% 28.16% 99.15% 90.17% 49.76% 26.11% 97.21% 62.50% 30.98% 9.78% 98.88% 87.28% 33.34% 20.68% 97.02% 79.38% 8.70% 2.49% 98.01% 26.12% 5.09% 1.01% 98.37% 47.75% 5.19% 1.12% 98.56% 37.69% 6.76% 0.63%"
 accuracies = [float(p.strip('%')) for p in average_16.split()]
-
+pruning = "None None None None 2 2 2 2 6 6 6 6 10 10 10 10"
 datasets = ["Hamburger", "Ladybird", "Red Panda", "Scuba Diver", "Squirrel Monkey"]
+
 
 data = {
     'Dataset': [d for d in datasets for _ in range(16)],
-    'Pruning Layer': (['None', '2', '6', '10'] * 5) * 8,
-    'Noise': [(n+1)*32 for d in range(5) for n in range(4) for _ in range(4)],
+    'Pruning Layer': pruning.split()*5,
+    'Noise': ([32, 64, 96, 128] * 4) * 5,
     'Accuracy': accuracies
 }
 
@@ -75,7 +75,7 @@ sns.set_theme(style="whitegrid")
 sns.set_context("talk")
 
 # Graph 1: Detailed view per Dataset
-g = sns.FacetGrid(df, col="Dataset", col_wrap=4, hue="Pruning Layer", 
+g = sns.FacetGrid(df, col="Dataset", col_wrap=3, hue="Pruning Layer", 
                   height=4, aspect=1.5, palette=["#3b0f70", "#8c2981","#db0a3e", "#fe9f6d"])
 g.set_titles(row_template="{row_name}", col_template="{col_name}")
 g.map(sns.lineplot, "Noise", "Accuracy", marker="o", linewidth=2)
