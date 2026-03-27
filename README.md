@@ -1,15 +1,32 @@
 # Stress-Testing Vision Transformers: Region and Layer Sensitivity Under Token Dropping and Corruption
+## Contents
+1. [Contents](#contents)
+2. [Abstract](#abstract)
+3. [Poster](#poster)
+4. [Modifications and Key parts](#Modifications-and-Key-Parts)
+5. [Acknowledgements](#acknowledgements)
+6. [Original CLIP repository infomation](#clip)
+
 ## Abstract
 As Vision Transformers become more and more prevalent in Computer Vision, understanding their internal mechanics under stress and uncertainty is critical for developing robust, generalizable, and explainable AI. This study presents a systematic stress-test of the ViT-B/16 architecture under CLIP, evaluating classification accuracy across a gradient of Gaussian noise and attention-based token pruning. By iteratively perturbing eight pseudo-randomly selected images, we identify a distinct layer sensitivity to noise, where pruning early layers results in a significant performance degradation compared to later layers. Notably, we uncover a "Stabilizer Effect", where localizing noise to focal features significantly reduces performance variance and improves predictability compared to global perturbations. These results suggest that early-layers extract the most influential representations for dealing with uncertainty, and that spatial context plays a vital role in maintaining attentional stability under noise.
 
 ## Poster
 [![PDF Preview](/docs/poster_preview.png)](./docs/Final_USRP_Uncertainty_ViT_poster.pdf)
+[Full quality PDF](https://github.com/DreamingElectricSheep/CLIP/blob/main/docs/Final_USRP_Uncertainty_ViT_poster.pdf) 
+|
+ [Drive containing raw data and short write-up](https://drive.google.com/drive/folders/1DqpPq0wBvEggbYl9N0iu-J8BSnQiG_o4)
 
+## Modifications and Key Parts
+- [Main. Setting of experimental variables](https://github.com/DreamingElectricSheep/CLIP/blob/main/main.py)
+- [Modification of CLIP model to allow for token pruning](https://github.com/DreamingElectricSheep/CLIP/blob/main/clip/model.py)
+- [Itereative application of noise](https://github.com/DreamingElectricSheep/CLIP/blob/main/adversarial_data.py)
+- [Data visualization without pruning](https://github.com/DreamingElectricSheep/CLIP/blob/main/data_vis.py)
+- [Data visualization with pruning](https://github.com/DreamingElectricSheep/CLIP/blob/main/data_vis%20_p.py)
 
 
 ## Acknowledgements
-- Thanks to my mentor Minh Le for his mentorship, guidance and advice
-- Thanks to the CSSU for hosting the USRP over the past two semesters, and the Department of Computer Science at the University of Toronto for supporting this initiative  
+- Thanks to my mentor Minh Le for his mentorship, guidance and advice.
+- Thanks to the CSSU for hosting the USRP over the past two semesters, and the Department of Computer Science at the University of Toronto for supporting this initiative.
 
 
 # CLIP
