@@ -54,7 +54,7 @@ def visualize_pruning(image_bgr, topk_indices, grid_size, dim_factor=0.3):
 
 
 # Main
-labels2 = ["church outdoor",  "coffee shop", "conference center", "squirrel monkey", "scuba diver", "red panda", "ladybird", "hamburger", "tree", "shop", "monestary", "library", "building", "road", "steak", "pizza", "fish", "eagle"]
+labels2 = ["Hot dog", "church outdoor",  "coffee shop", "conference center", "squirrel monkey", "scuba diver", "red panda", "ladybird", "hamburger", "tree", "shop", "monestary", "library", "building", "road", "steak", "pizza", "fish", "eagle"]
 # Tokenize and encode
 text_inputs = clip.tokenize([f"a photo of a {c}" for c in labels2]).to(device)
 
@@ -66,8 +66,8 @@ path = Path('image_testing')
 
 repetitions = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]
 # repetitions = ["a", "b", "c", "d", "e"]
-box_size = 5
-center_patch = (6, 7) # Center
+box_size = 9
+center_patch = (5, 10) # Center
 
 # repetitions = ["a"]
 if model_name == 32:
@@ -75,8 +75,8 @@ if model_name == 32:
     grid_size = 7
 elif model_name == 16:
     # pruning_plans = [None, {2: 98}]
-    pruning_plans = [None, {2: 98}, {6: 98}, {10: 98}] # For B/16
-    # pruning_plans = [{2: 78}, {2: 58}, {2: 38},{2: 18}] # For more constrained testing of dropping tokens from layer 2
+    # pruning_plans = [None, {2: 98}, {6: 98}, {10: 98}] # For B/16
+    pruning_plans = [{2: 78}, {2: 58}, {2: 38},{2: 18}] # For more constrained testing of dropping tokens from layer 2
     grid_size = 14
 
 print(f"--- Starting experiment with model ViT-B/{model_name} ---")
@@ -132,9 +132,10 @@ for pruning_plan in pruning_plans:
                 result_view = visualize_pruning(copy, top_indices, grid_size = grid_size)
                 
                 # Saving the image
-                vis_filename = f"pruning_vis/{model_name} constrained/{entry.stem}/{entry.stem}_p_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
+                # vis_filename = f"pruning_vis/{model_name} constrained/{entry.stem}/{entry.stem}_p_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
                 # vis_filename = f"pruning_vis/{model_name}p constrained/{entry.stem}/{entry.stem}_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
                 # vis_filename = f"pruning_vis/{model_name}p/{entry.stem}/{entry.stem}_p_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
+                vis_filename = f"pruning_vis/extra/{entry.stem}_p_gauss_{layer_key}_{num_kept}_{rep}_{i}.png"
                 cv2.imwrite(vis_filename, result_view)
     print(f"--- Completed pruning plan: {pruning_plan} ---")
 
@@ -143,9 +144,11 @@ import csv
 
 # 1. Define the CSV filename
 for name in names:
-    csv_file = f"experiment_data/{model_name} constrained/{name}_experiment_data.csv"
+    # csv_file = f"experiment_data/{model_name} constrained/{name}_experiment_data.csv"
     # csv_file = f"experiment_data/{model_name} constrained/{name}_p_experiment_data.csv"
     # csv_file = f"experiment_data/{model_name}p/{name}_p_experiment_data.csv"
+    csv_file = f"experiment_data/extra/{name}_p_experiment_data.csv"
+
 
     header = ["Filename", "Pruning_Layer", "Tokens_Kept", "Variant_ID"] + labels2
 
