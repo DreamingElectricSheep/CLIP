@@ -2,7 +2,10 @@
 ## Abstract
 As Vision Transformers become more and more prevalent in Computer Vision, understanding their internal mechanics under stress and uncertainty is critical for developing robust, generalizable, and explainable AI. This study presents a systematic stress-test of the ViT-B/16 architecture under CLIP, evaluating classification accuracy across a gradient of Gaussian noise and attention-based token pruning. By iteratively perturbing eight pseudo-randomly selected images, we identify a distinct layer sensitivity to noise, where pruning early layers results in a significant performance degradation compared to later layers. Notably, we uncover a "Stabilizer Effect", where localizing noise to focal features significantly reduces performance variance and improves predictability compared to global perturbations. These results suggest that early-layers extract the most influential representations for dealing with uncertainty, and that spatial context plays a vital role in maintaining attentional stability under noise.
 
-[![PDF Preview](./docs/Final_USRP_Uncertainty_ViT_poster.png)](./docs/Final_USRP_Uncertainty_ViT_poster.pdf)
+## Poster
+[![PDF Preview](/docs/poster_preview.png)](./docs/Final_USRP_Uncertainty_ViT_poster.pdf)
+
+
 
 ## Acknowledgements
 - Thanks to my mentor Minh Le for his mentorship, guidance and advice
