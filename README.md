@@ -25,7 +25,7 @@ As Vision Transformers become more and more prevalent in Computer Vision, unders
 
 
 ## Acknowledgements
-- Thanks to my mentor Minh Le for his mentorship, guidance and advice.
+- Thanks to my mentor [Minh Le](https://github.com/nm-le) for his mentorship, guidance and advice.
 - Thanks to the CSSU for hosting the USRP over the past two semesters, and the Department of Computer Science at the University of Toronto for supporting this initiative.
 
 
